@@ -1,9 +1,25 @@
+######################################################################
+#                                                                    #
+# Task 1.2: Introduction to Python: proving dice function randomly   #
+# Instructions:                                                      #
+#  • Your task is to prove your ‘Dice Function’ is working in the    #
+# VS Code                                                            #
+#  • A directory named home/username/Desktop/ML/Task1 needs to be    #
+# created and inside that the                                        #
+# 3_Dice_Ext.py python file needs to be created                      #
+#  • Some hints: in addition to previous commands read on the        #
+# ‘for loop’, ‘while loop’, ‘matplotlib’ and ’numpy’                 #
+# • What can you do to prove randomness? Think about statistics      #
+#                                                                    #
+#                                                                    #
+# Author: Miguel Angel Lopez Mejia                                   #
+######################################################################
+
 import random
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 import logging
-
-
+import numpy as np
 from collections import Counter
 from statistics import mean
 
@@ -43,59 +59,218 @@ class DiceGenerator:
 
     # Function to simulate dice rolls
     def roll_dice(self):
+        """
+        Simulates rolling a six-sided die multiple times and stores the results.
+
+        This method generates a list of random integers between 1 and 6 (inclusive),
+        representing the outcomes of rolling a die `self.num_rolls` times. The results
+        are stored in the instance variable `self.results`.
+
+        Attributes:
+            self.results (list): A list of integers representing the die roll outcomes.
+            self.num_rolls (int): The number of times the die is rolled, defined elsewhere
+                                in the class.
+
+        Examples:
+            >>> class DiceSimulator:
+            ...     def __init__(self, num_rolls):
+            ...         self.num_rolls = num_rolls
+            ...     def roll_dice(self):
+            ...         self.results = [random.randint(1, 6) for roll in range(self.num_rolls)]
+            >>> sim = DiceSimulator(3)
+            >>> sim.roll_dice()
+            >>> print(sim.results)  # Possible output: [4, 1, 6]
+        """        
         self.results = [random.randint(1, 6) for roll in range(self.num_rolls)]
 
 
     def count_ocurrences_per_result(self):
         """
-        Simulates rolling a six-sided die multiple times and returns the results.
+        Counts the occurrences of each die face in the results and logs the statistics.
 
-            Args:
-                num_rolls (int): The number of times to roll the die.
+        This method uses the Counter class to tally the frequency of each result (1 to 6)
+        from the die rolls stored in `self.results`. It then logs the count and percentage
+        of occurrences for each face using a logger.
 
-            Returns:
-                list: A list of integers, each between 1 and 6, representing the dice roll outcomes.
+        Attributes:
+            self.counts (Counter): A Counter object storing the frequency of each die face.
+            self.results (list): A list of integers (1-6) representing prior die roll outcomes.
+            self.num_rolls (int): The total number of die rolls, defined elsewhere in the class.
 
-            Example:
-                >>> sim = DiceSimulator()
-                >>> sim.roll_dice(3)
-                [4, 1, 6]  # Example output, actual results will vary due to randomness.
-            """        
-        self.counts = Counter(self.results)
+        Notes:
+            - Requires the `collections` module for Counter (`from collections import Counter`).
+            - Requires a `logger` object (e.g., from the `logging` module) to be configured.
+
+        Examples:
+            >>> from collections import Counter
+            >>> import logging
+            >>> logging.basicConfig(level=logging.INFO)
+            >>> logger = logging.getLogger(__name__)
+            >>> class DiceSimulator:
+            ...     def __init__(self, num_rolls):
+            ...         self.num_rolls = num_rolls
+            ...         self.results = []
+            ...     def count_ocurrences_per_result(self):
+            ...         self.counts = Counter(self.results)
+            ...         for i in range(1, 7):
+            ...             logger.info(f" Face {i}: Appears {self.counts[i]} times - ({round(self.counts[i]/self.num_rolls*100,2)} %) ")
+            >>> sim = DiceSimulator(100)
+            >>> sim.results = [4, 4, 5, 1, 2, 3, 6]  # Example results
+            >>> sim.count_ocurrences_per_result()
+            INFO:__main__: Face 1: Appears 1 times - (1.0 %)
+        """
+        self.counts = Counter(self.results) # Counter({4: 23, 5: 20, 1: 17, 2: 16, 3: 15, 6: 9})
         for i in range(1, 7):
-            logger.info(f"Face {i}: Appears {self.counts[i]} times - ({round(self.counts[i]/self.num_rolls*100,2)} %) ")
+            logger.info(f" Face {i}: Appears {self.counts[i]} times - ({round(self.counts[i]/self.num_rolls*100,2)} %) ")
         
         
+    def test_randomness(self):
+        """
+        The Chi-Square method is used to determine if there is a significant difference between the expected 
+        frequencies and the observed frequencies, the function assumes that each face of the dice the 
+        same probability of 1/6.
+
+        The method is represented by the following formula:
+            χ2=∑ (Oi-Ei)2/Ei
+
+        Where 
+        Oi is the observed frequency, in this case, the frequency of each face of the dice
+        Ei is the excpected frecuency of each face of the dice
+
+        E.G.
+        Analysis:
+        If the dice is rolled 12 times, we expect that the frequency of the values to be like:
+        Expected = 12/6 = 2 for each face
+        Observed = [0,4,1,3,3,1] (sum is 12)
+
+        χ2 = 6.0 (In this case, the formula will calculate the Chi-Square for [0,4,1,3,3,1] and [2,2,2,2,2,2])
+        
+        Now, we need to consider the following:
+
+        1. Degrees of freedom = 6-5 = 1 (We know that there are 6 categories, if we roll the dice 12 times, 
+        the sum of the frequencies of each face of the dice must be 12, if we know that the values of the 
+        numbers 1-5 are 0,4,1,3,3 the value of the number 6 must be 1 so they sum 12, there is no freedom 
+        to chosse the last value, that is why we have 1 degree of freedom.)
+
+        2. Critic Value = 11.07 (Considering a significance level (α) = 0.05 , It is the threshold defined to decide when a 
+        difference between what is observed and what is expected is "too large" to be attributed 
+        to chance, 0.05 is the standar - Check for reference Images/3_Dice_Chi_square_probability_table.png)
+
+        3. P-Value = 0.05 (We consider the value of P-Value to be 0.05, is an indicator that tells us what is the probability of 
+        observing a test statistic as extreme or more extreme than the one calculated, under the Null hypothesis.)
+
+        Conclusion:
+        - We defined the Null Hypothesis = The dice is fair, which means that the frequencies of each face of the dice are the same.
+        - Null Hypotesis expects χ2 > Critic Value
+        - As the value of χ2 < Critic Value (6.0 < 11.07) we can't reject the Null Hyphotesis (The dice is fair)
+        - We can also use the P-value where, is p < 0.05, we can reject the Null Hyphotesis, 
+        - is p > 0.05 we can't reject the Null Hypothesis 
+        - P-value will be 0.3062, which means 0.3062 > 0.05 (The dice is fair)
+        - The expected mean is 2
+        - The observed mean is 3.666
+        """
+        # Contar frecuencias observadas con NumPy
+        observed = np.array([self.counts.get(i, 0) for i in range(1, 7)])
+        
+        # Frecuencia esperada (uniforme: num_rolls / 6)
+        expected = np.full(6, self.num_rolls / 6)
+   
+        # Calcular chi-cuadrado manualmente
+        chi_square_stat = np.sum((observed - expected) ** 2 / expected)
+                
+        if chi_square_stat > 11.07:
+            logger.info(f" Degrees of freedom: 5 (6 faces - 1)")
+            logger.info(" Compare with critical value (e.g., 11.07 for alpha=0.05, df=5)")
+            logger.info(f" The value of Chi-square ({chi_square_stat}) > Critic Value (11.07).")
+            logger.info(" The conclusion is that the Null hypothesis can be rejected.")
+        else:
+            logger.info(f" Degrees of freedom: 5 (6 faces - 1)")
+            logger.info(" Compare with critical value (e.g., 11.07 for alpha=0.05, df=5)")            
+            logger.info(f" The value of Chi-square ({chi_square_stat}) < Critic Value (11.07)")
+            logger.info(" The conclusion is that there is no enough information to reject the Null hypothesis")
+
 
     def chi_square(self):
+        """
+        The Chi-Square method is used to determine if there is a significant difference between the expected 
+        frequencies and the observed frequencies, the function assumes that each face of the dice the 
+        same probability of 1/6.
+
+        The method is represented by the following formula:
+            χ2=∑ (Oi-Ei)2/Ei
+
+        Where 
+        Oi is the observed frequency, in this case, the frequency of each face of the dice
+        Ei is the excpected frecuency of each face of the dice
+
+        E.G.
+        Analysis:
+        If the dice is rolled 12 times, we expect that the frequency of the values to be like:
+        Expected = 12/6 = 2 for each face
+        Observed = [0,4,1,3,3,1] (sum is 12)
+
+        χ2 = 6.0 (In this case, the formula will calculate the Chi-Square for [0,4,1,3,3,1] and [2,2,2,2,2,2])
+        
+        Now, we need to consider the following:
+
+        1. Degrees of freedom = 6-5 = 1 (We know that there are 6 categories, if we roll the dice 12 times, 
+        the sum of the frequencies of each face of the dice must be 12, if we know that the values of the 
+        numbers 1-5 are 0,4,1,3,3 the value of the number 6 must be 1 so they sum 12, there is no freedom 
+        to chosse the last value, that is why we have 1 degree of freedom.)
+
+        2. Critic Value = 11.07 (Considering a significance level (α) = 0.05 , It is the threshold defined to decide when a 
+        difference between what is observed and what is expected is "too large" to be attributed 
+        to chance, 0.05 is the standar - Check for reference Images/3_Dice_Chi_square_probability_table.png)
+
+        3. P-Value = 0.05 (We consider the value of P-Value to be 0.05, is an indicator that tells us what is the probability of 
+        observing a test statistic as extreme or more extreme than the one calculated, under the Null hypothesis.)
+
+        Conclusion:
+        - We defined the Null Hypothesis = The dice is fair, which means that the frequencies of each face of the dice are the same.
+        - Null Hypotesis expects χ2 > Critic Value
+        - As the value of χ2 < Critic Value (6.0 < 11.07) we can't reject the Null Hyphotesis (The dice is fair)
+        - We can also use the P-value where, is p < 0.05, we can reject the Null Hyphotesis, 
+        - is p > 0.05 we can't reject the Null Hypothesis 
+        - P-value will be 0.3062, which means 0.3062 > 0.05 (The dice is fair)
+        - The expected mean is 2
+        - The observed mean is 3.666
+        """
         # Chi-square test for uniformity
         expected = self.num_rolls / 6  # Expected frequency for each number
-        observed = [self.counts[i] for i in range(1, 7)]
+        observed = [self.counts[i] for i in range(1, 7)] # Observed frequencies per face of the dice
+
         chi_square_stat, p_value = stats.chisquare(observed, [expected] * 6)
-        # print(f"\nChi-square statistic: {chi_square_stat:.2f}")
-        logger.info(f"Chi-square statistic: {round(chi_square_stat,2)}")
-        # print(f"P-value: {p_value:.4f}")
-        logger.info(f"P-value: {round(p_value,4)}")
+        
+
+        logger.info(" The Null Hypothesis is that the dice is fair.")
+
+        if chi_square_stat > 11.07 and p_value < 0.05:
+            logger.info(f" The value of Chi-square ({chi_square_stat}) > Critic Value (11.07), and the P-value ({round(p_value,2)}) < 0.05.")
+            logger.info(" The conclusion is that the Null hypothesis can be rejected.")
+        else:
+            logger.info(f" The value of Chi-square ({chi_square_stat}) < Critic Value (11.07), and the P-value ({round(p_value,2)}) > 0.05.")
+            logger.info(" The conclusion is that there is no enough information to reject the Null hypothesis")
+
     
     def mean_graph(self):
         """
-        Creates a bar chart of dice roll results with a line indicating their mean.
+        Generates a bar chart of dice roll results and overlays the observed mean.
 
-            Args:
-                results (list): A list of integers representing dice roll outcomes.
+        Args:
+            self: The instance of the class with results attribute.
 
-            Notes:
-                Logs the mean value using the logging module at the INFO level.
-                Requires matplotlib.pyplot as plt, statistics.mean, and a configured logger.
+        Attributes:
+            self.results (list): List of die roll outcomes (integers 1-6).
 
-            Example:
-                >>> sim = DiceSimulator()
-                >>> sim.mean_graph([1, 2, 3, 4, 5])
-                # Displays a bar chart with bars at 1, 2, 3, 4, 5 and a red dashed line at mean 3.0
-            """        
+        Notes:
+            Requires `from statistics import mean`, `import matplotlib.pyplot as plt`,
+            and a configured `logger`.
+
+        """       
         indices = range(len(self.results)) # Obtain the indexes for the X-axis
+        logger.info(f" The Expected mean is 3.5")
         mean_dices = mean(self.results)
-        logger.info(f"The mean is {mean_dices}")
+        logger.info(f" The Observed mean is {mean_dices}")
 
         # Create bar chart
         plt.bar(indices, self.results, color = 'cyan', label = 'Values')
@@ -114,21 +289,38 @@ class DiceGenerator:
 
     def histogram_dice(self):
         """
-        Creates a histogram showing the frequency distribution of dice roll results.
+        Generates a histogram showing the frequency distribution of dice roll results.
 
-            Args:
-                results (list): A list of integers representing dice roll outcomes (1 to 6).
+        This method creates a histogram of the dice roll outcomes stored in `self.results`,
+        with bins centered on the possible die values (1 to 6). The x-axis represents the
+        dice values, and the y-axis shows the frequency of each value.
 
-            Notes:
-                Assumes num_rolls is available as a class attribute (self.num_rolls).
-                Requires matplotlib.pyplot as plt.
+        Attributes:
+            self.results (list): A list of integers (1-6) representing die roll outcomes.
+            self.num_rolls (int): The total number of die rolls, defined elsewhere in the class.
 
-            Example:
-                >>> sim = DiceSimulator()
-                >>> sim.num_rolls = 5
-                >>> sim.histogram_dice([1, 2, 2, 3, 4])
-                # Displays a histogram with bars for values 1, 2, 3, 4, and their frequencies.
-            """        
+        Notes:
+            - Requires `matplotlib.pyplot` for plotting (`import matplotlib.pyplot as plt`).
+            - The bins are set to [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5] to center bars on integer values.
+
+        Examples:
+            >>> import matplotlib.pyplot as plt
+            >>> class DiceSimulator:
+            ...     def __init__(self, num_rolls):
+            ...         self.num_rolls = num_rolls
+            ...         self.results = []
+            ...     def histogram_dice(self):
+            ...         plt.hist(self.results, bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5], 
+            ...                 edgecolor='black', align='mid')
+            ...         plt.title(f'Distribution of {self.num_rolls} Dice Rolls')
+            ...         plt.xlabel('Dice Value')
+            ...         plt.ylabel('Frequency')
+            ...         plt.show()
+            >>> sim = DiceSimulator(10)
+            >>> sim.results = [1, 2, 2, 3, 4, 4, 4, 5, 6, 6]  # Example results
+            >>> sim.histogram_dice()
+            # Displays a histogram with bars centered at 1, 2, 3, 4, 5, 6 showing frequencies
+        """     
         # Create histogram
         plt.hist(self.results, bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5], 
                 edgecolor='black', align='mid')
@@ -137,17 +329,32 @@ class DiceGenerator:
         plt.ylabel('Frequency')
         plt.show()
 
+def main():
+    """Executes a sequence of dice simulation and analysis steps.
 
-dice_generator = DiceGenerator()
+        This function initializes a DiceGenerator object and runs a series of methods to:
+        1. Prompt the user for the number of dice rolls,
+        2. Simulate rolling a die that many times,
+        3. Count and log the occurrences of each result,
+        4. Generate a bar chart with the mean,
+        5. Create a histogram of the results.
+        6. Perform a chi-square test on the results,
+    """    
+    dice_generator = DiceGenerator()
 
-dice_generator.get_roll_number()
+    dice_generator.get_roll_number()
 
-dice_generator.roll_dice()
+    dice_generator.roll_dice()
 
-counts = dice_generator.count_ocurrences_per_result()
+    dice_generator.count_ocurrences_per_result()
+    
+    # Extra analysis
+    dice_generator.test_randomness()
 
-dice_generator.chi_square()
 
-dice_generator.mean_graph()
+    dice_generator.mean_graph()
 
-dice_generator.histogram_dice()
+    dice_generator.histogram_dice()
+
+
+main()
