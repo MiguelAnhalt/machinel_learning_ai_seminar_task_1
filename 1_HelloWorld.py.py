@@ -13,13 +13,29 @@
 ######################################################################
 
 class HelloWorld:
-    def __init():
-        pass
+    def __init__(self,name):
+        # Define the variables to be used in the class
+        self.name = name 
+        
 
     def print_hello(self):
-        print("Hello World from Miguel Angel Lopez Mejia")
+        print(f"Hello World from {self.name}!") # Concatenates a string with the variable 'name'
 
 
-print_val = HelloWorld()
+def main():
+    
+    name = input('Introduce your name: ') # Ask to the user to introduce a name
 
-print_val.print_hello()
+    try:
+        int(name) # Try to cast the name to be integer in order to identify if the user introduced a number instead of a string.
+        print("The value must be string")
+        return 0
+    
+    except Exception as e:    
+        print_val = HelloWorld(name) # Create instance of the class HelloWorld
+
+        print_val.print_hello() # Call the method that Concatenates a string with the variable 'name'
+    
+
+if __name__ == "__main__":
+    main()

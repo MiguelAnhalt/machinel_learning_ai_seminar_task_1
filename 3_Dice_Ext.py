@@ -15,13 +15,15 @@
 # Author: Miguel Angel Lopez Mejia                                   #
 ######################################################################
 
+# region Libraries
 import random
 import matplotlib.pyplot as plt
-import scipy.stats as stats
 import logging
 import numpy as np
+import sys
 from collections import Counter
 from statistics import mean
+# endregion
 
 # Basic configuration
 logging.basicConfig(level=logging.INFO)  # Sets the level to INFO and above
@@ -29,36 +31,45 @@ logging.basicConfig(level=logging.INFO)  # Sets the level to INFO and above
 # Create a logger
 logger = logging.getLogger(__name__)  # __name__ gives the module name
 
+# region Class
 class DiceGenerator:
     def __init():
         pass
     
     def get_roll_number(self):
         """
-        Prompts the user for the number of dice and returns it as an integer.
+        Prompts the user for the number of die rolls and stores it in `self.num_rolls`.
 
-        Returns:
-            int: The number of dice entered by the user, or 0 if input is invalid.
+            This method requests an integer input for how many times to roll a die. If the input
+            is valid, it assigns the value to `self.num_rolls`. If the input is invalid (e.g., non-integer),
+            it prints an error message and terminates the program.
 
-        Raises:
-            None explicitly, but handles all exceptions internally by returning 0.
+            Notes:
+                - Stores the result in `self.num_rolls` as an integer.
+                - Uses `input()` for user interaction, expecting an integer.
+                - On invalid input, the program exits with status code 1 via `sys.exit(1)`.
+                - Assumes a single die, as the prompt refers to rolling "the dice" (singular context).
 
-        Examples:
-            >>> get_dice_number()  # User enters "3"
-            3
-            >>> get_dice_number()  # User enters "abc"
-            The value must be integer
-            0
-        """
+            Example:
+                >>> dice_gen = DiceGenerator()
+                >>> dice_gen.get_roll_number()  # User enters "5"
+                # Sets dice_gen.num_rolls = 5
+                >>> dice_gen.get_roll_number()  # User enters "abc"
+                The value must be integer
+                # Program exits with status code 1
+
+            Raises:
+                SystemExit: If the input cannot be converted to an integer, with an error message.
+            """
         try:
             self.num_rolls = int(input("How many times you want to roll the dice? "))
             
         except Exception as e:
             print("The value must be integer")
-            self.num_rolls = 0
+            sys.exit(1)
 
-    # Function to simulate dice rolls
-    def roll_dice(self):
+    # Function to simulate die rolls
+    def roll_die(self):
         """
         Simulates rolling a six-sided die multiple times and stores the results.
 
@@ -82,7 +93,6 @@ class DiceGenerator:
             >>> print(sim.results)  # Possible output: [4, 1, 6]
         """        
         self.results = [random.randint(1, 6) for roll in range(self.num_rolls)]
-
 
     def count_ocurrences_per_face(self):
         """
@@ -130,19 +140,19 @@ class DiceGenerator:
     def test_randomness(self):
         """
         The Chi-Square method is used to determine if there is a significant difference between the expected 
-        frequencies and the observed frequencies, the function assumes that each face of the dice the 
+        frequencies and the observed frequencies, the function assumes that each face of the die the 
         same probability of 1/6.
 
         The method is represented by the following formula:
             χ2=∑ (Oi-Ei)2/Ei
 
         Where 
-        Oi is the observed frequency, in this case, the frequency of each face of the dice
-        Ei is the excpected frecuency of each face of the dice
+        Oi is the observed frequency, in this case, the frequency of each face of the die
+        Ei is the excpected frecuency of each face of the die
 
         E.G.
         Analysis:
-        If the dice is rolled 12 times, we expect that the frequency of the values to be like:
+        If the die is rolled 12 times, we expect that the frequency of the values to be like:
         Expected = 12/6 = 2 for each face
         Observed = [0,4,1,3,3,1] (sum is 12)
 
@@ -153,7 +163,7 @@ class DiceGenerator:
         1. Degrees of freedom = 6-5 = 1 (We know that there are 6 categories, if we roll the dice 12 times, 
         the sum of the frequencies of each face of the dice must be 12, if we know that the values of the 
         numbers 1-5 are 0,4,1,3,3 the value of the number 6 must be 1 so they sum 12, there is no freedom 
-        to chosse the last value, that is why we have 1 degree of freedom.)
+        to choose the last value, that is why we have 1 degree of freedom.)
 
         2. Critic Value = 11.07 (Considering a significance level (α) = 0.05 , It is the threshold defined to decide when a 
         difference between what is observed and what is expected is "too large" to be attributed 
@@ -161,18 +171,18 @@ class DiceGenerator:
 
         Conclusion:
         - We defined the Null Hypothesis = The dice is fair, which means that the frequencies of each face of the dice are the same.
-        - Null Hypotesis expects χ2 > Critic Value
+        - Null Hypothesis expects χ2 > Critic Value
         - As the value of χ2 < Critic Value (6.0 < 11.07) we can't reject the Null Hyphotesis (The dice is fair)
         - The expected mean is 2
         - The observed mean is 3.666
         """
-        # Contar frecuencias observadas con NumPy
+         # Count frequencies
         observed = np.array([self.counts.get(i, 0) for i in range(1, 7)])
         
-        # Frecuencia esperada (uniforme: num_rolls / 6)
+        # Expécted frequency
         expected = np.full(6, self.num_rolls / 6)
    
-        # Calcular chi-cuadrado manualmente
+        # Calculate Chi-square
         chi_square_stat = np.sum((observed - expected) ** 2 / expected)
 
         logger.info("-----------------------------------------------------------------------------------------------")
@@ -193,43 +203,61 @@ class DiceGenerator:
         logger.info("-----------------------------------------------------------------------------------------------")
         logger.info("-----------------------------------------------------------------------------------------------")
 
-    def mean_graph(self):
+    def plot_results(self):
         """
-        Generates a bar chart of dice roll results and overlays the observed mean.
+        Generates a bar chart of dice roll results with a mean line.
 
-        Args:
-            self: The instance of the class with results attribute.
+            This method creates a visualization of the dice roll results stored in `self.results`.
+            It plots each roll’s value as a bar, adds a horizontal line for the observed mean,
+            and logs the expected mean (3.5 for a fair six-sided die) and observed mean.
+            The plot includes labeled axes, a title, and a legend.
 
-        Attributes:
-            self.results (list): List of die roll outcomes (integers 1-6).
+            Parameters:
+                None
 
-        Notes:
-            Requires `from statistics import mean`, `import matplotlib.pyplot as plt`,
-            and a configured `logger`.
+            Returns:
+                None
 
-        """       
-        
-        indices = range(len(self.results)) # Obtain the indexes for the X-axis
+            Notes:
+                - Requires `self.results` to be a list or array of dice roll outcomes (integers).
+                - Uses `matplotlib.pyplot` for plotting and a `logger` for logging.
+                - The expected mean is hardcoded as 3.5, assuming a fair six-sided die.
+                - The plot is displayed immediately using `plt.show()`.
+
+            Example:
+                >>> dice_gen = DiceGenerator()
+                >>> dice_gen.results = [4, 2, 6, 3, 1]
+                >>> dice_gen.plot_results()
+                # Logs expected and observed means, displays a bar chart with mean line.
+
+            Raises:
+                AttributeError: If `self.results` is not defined or empty.
+                ImportError: If `matplotlib.pyplot` or `statistics` modules are not available.
+            """        
+        num_rolls = len(self.results)
+        roll_numbers = list(range(1, num_rolls + 1)) # Roll numbers starting from 1
+
         logger.info(f" The Expected mean is 3.5")
         mean_dices = mean(self.results)
         logger.info(f" The Observed mean is {mean_dices}")
         logger.info("-----------------------------------------------------------------------------------------------")
         # Create bar chart
-        plt.bar(indices, self.results, color = 'cyan', label = 'Values')
+        plt.bar(x=roll_numbers, height=self.results, color='cyan', label='Values', align='center')
         # Add a horizontal line for the mean
-        plt.axhline(y=mean_dices, color='red', linestyle='--', label=f'Mean = {mean_dices}')
-        
+        plt.axhline(y=mean_dices, color='firebrick', linestyle='--', label=f'Mean = {mean_dices:.2f}')
+
         # Customize the plot
         plt.xlabel('Roll Number')
         plt.ylabel('Value')
-        plt.title('Dice Rolls and Their Mean')
+        plt.title('Die Rolls and Their Mean')
+        plt.xticks(roll_numbers) # Set the x-axis ticks to the roll numbers
         plt.legend()
 
         # Show the plot
+        plt.tight_layout() # Adjust layout to prevent labels from overlapping
         plt.show()
 
-
-    def histogram_dice(self):
+    def histogram_die(self):
         """
         Generates a histogram showing the frequency distribution of dice roll results.
 
@@ -266,35 +294,41 @@ class DiceGenerator:
         # Create histogram
         plt.hist(self.results, bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5], 
                 edgecolor='black', align='mid')
-        plt.title(f'Distribution of {self.num_rolls} Dice Rolls')
-        plt.xlabel('Dice Value')
+        plt.title(f'Distribution of {self.num_rolls} Die Rolls')
+
+        plt.xlabel('Die Value')
         plt.ylabel('Frequency')
         plt.show()
+# endregion
 
+
+#region Implementation
 def main():
-    """Executes a sequence of dice simulation and analysis steps.
-
-        This function initializes a DiceGenerator object and runs a series of methods to:
-        1. Prompt the user for the number of dice rolls,
-        2. Simulate rolling a die that many times,
-        3. Count and log the occurrences of each result,
-        4. Generate a bar chart with the mean,
-        5. Create a histogram of the results.
-        6. Perform a chi-square test on the results,
+    """
+    Executes a sequence of die simulation and analysis steps.
+    This function initializes a `DiceGenerator` object and orchestrates a workflow to:
+            1. Prompt the user for the number of die rolls.
+            2. Simulate rolling a die the specified number of times.
+            3. Count and log occurrences of each die face.
+            4. Perform a chi-square test to assess randomness.
+            5. Generate a bar chart displaying results with the mean.
+            6. Create a histogram of the roll results.
     """    
-    dice_generator = DiceGenerator()
+    die_generator = DiceGenerator()
 
-    dice_generator.get_roll_number()
+    die_generator.get_roll_number()
 
-    dice_generator.roll_dice()
+    die_generator.roll_die()
 
-    dice_generator.count_ocurrences_per_face()
+    die_generator.count_ocurrences_per_face()
     
-    dice_generator.test_randomness()
+    die_generator.test_randomness()
 
-    dice_generator.mean_graph()
+    die_generator.plot_results()
 
-    dice_generator.histogram_dice()
+    die_generator.histogram_die()
 
 
-main()
+if __name__ == "__main__":
+    main()
+#endregion    
