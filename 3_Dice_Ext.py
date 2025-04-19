@@ -82,15 +82,6 @@ class DiceGenerator:
             self.num_rolls (int): The number of times the die is rolled, defined elsewhere
                                 in the class.
 
-        Examples:
-            >>> class DiceSimulator:
-            ...     def __init__(self, num_rolls):
-            ...         self.num_rolls = num_rolls
-            ...     def roll_dice(self):
-            ...         self.results = [random.randint(1, 6) for roll in range(self.num_rolls)]
-            >>> sim = DiceSimulator(3)
-            >>> sim.roll_dice()
-            >>> print(sim.results)  # Possible output: [4, 1, 6]
         """        
         self.results = [random.randint(1, 6) for roll in range(self.num_rolls)]
 
@@ -111,23 +102,6 @@ class DiceGenerator:
             - Requires the `collections` module for Counter (`from collections import Counter`).
             - Requires a `logger` object (e.g., from the `logging` module) to be configured.
 
-        Examples:
-            >>> from collections import Counter
-            >>> import logging
-            >>> logging.basicConfig(level=logging.INFO)
-            >>> logger = logging.getLogger(__name__)
-            >>> class DiceSimulator:
-            ...     def __init__(self, num_rolls):
-            ...         self.num_rolls = num_rolls
-            ...         self.results = []
-            ...     def count_ocurrences_per_result(self):
-            ...         self.counts = Counter(self.results)
-            ...         for i in range(1, 7):
-            ...             logger.info(f" Face {i}: Appears {self.counts[i]} times - ({round(self.counts[i]/self.num_rolls*100,2)} %) ")
-            >>> sim = DiceSimulator(100)
-            >>> sim.results = [4, 4, 5, 1, 2, 3, 6]  # Example results
-            >>> sim.count_ocurrences_per_result()
-            INFO:__main__: Face 1: Appears 1 times - (1.0 %)
         """
         logger.info("-----------------------------------------------------------------------------------------------")
         self.counts = Counter(self.results) # Counter({4: 23, 5: 20, 1: 17, 2: 16, 3: 15, 6: 9})
@@ -212,12 +186,6 @@ class DiceGenerator:
             and logs the expected mean (3.5 for a fair six-sided die) and observed mean.
             The plot includes labeled axes, a title, and a legend.
 
-            Parameters:
-                None
-
-            Returns:
-                None
-
             Notes:
                 - Requires `self.results` to be a list or array of dice roll outcomes (integers).
                 - Uses `matplotlib.pyplot` for plotting and a `logger` for logging.
@@ -229,10 +197,6 @@ class DiceGenerator:
                 >>> dice_gen.results = [4, 2, 6, 3, 1]
                 >>> dice_gen.plot_results()
                 # Logs expected and observed means, displays a bar chart with mean line.
-
-            Raises:
-                AttributeError: If `self.results` is not defined or empty.
-                ImportError: If `matplotlib.pyplot` or `statistics` modules are not available.
             """        
         num_rolls = len(self.results)
         roll_numbers = list(range(1, num_rolls + 1)) # Roll numbers starting from 1
@@ -273,23 +237,6 @@ class DiceGenerator:
             - Requires `matplotlib.pyplot` for plotting (`import matplotlib.pyplot as plt`).
             - The bins are set to [0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5] to center bars on integer values.
 
-        Examples:
-            >>> import matplotlib.pyplot as plt
-            >>> class DiceSimulator:
-            ...     def __init__(self, num_rolls):
-            ...         self.num_rolls = num_rolls
-            ...         self.results = []
-            ...     def histogram_dice(self):
-            ...         plt.hist(self.results, bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5], 
-            ...                 edgecolor='black', align='mid')
-            ...         plt.title(f'Distribution of {self.num_rolls} Dice Rolls')
-            ...         plt.xlabel('Dice Value')
-            ...         plt.ylabel('Frequency')
-            ...         plt.show()
-            >>> sim = DiceSimulator(10)
-            >>> sim.results = [1, 2, 2, 3, 4, 4, 4, 5, 6, 6]  # Example results
-            >>> sim.histogram_dice()
-            # Displays a histogram with bars centered at 1, 2, 3, 4, 5, 6 showing frequencies
         """     
         # Create histogram
         plt.hist(self.results, bins=[0.5, 1.5, 2.5, 3.5, 4.5, 5.5, 6.5], 
